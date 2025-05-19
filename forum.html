@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="assets/style.css">
+    <meta charset="utf-8">
+    <title>Forum - 3Chan</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        #messageForm { 
+            margin: 20px 0; 
+        }
+        #messages { 
+            margin-top: 20px; 
+        }
+        .message { 
+            border-bottom: 1px solid #eee; 
+            padding: 10px 0; 
+            display: flex;
+            gap: 10px;
+        }
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .message-content {
+            flex: 1;
+        }
+        .user-menu {
+            position: relative;
+            float: right;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+        }
+        .dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .user-menu:hover .dropdown {
+            display: block;
+        }
+        .avatar-form {
+            display: none;
+        }
+        .dropdown button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+        }
+        .dropdown button:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-menu">
+        <img id="userAvatar" src="assets/avatars/default.png" class="user-avatar" title="Mon profil">
+        <div class="dropdown">
+            <p>Connecté en tant que <strong id="usernameDisplay"></strong></p>
+            <input type="file" id="avatarInput" class="avatar-form" accept="image/*">
+            <button onclick="document.getElementById('avatarInput').click()">Changer de photo</button>
+            <button id="logoutBtn">Déconnexion</button>
+        </div>
+    </div>
+
+    <h1>Forum 3Chan</h1>
+    
+    <form id="messageForm">
+        <textarea id="messageContent" rows="4" style="width: 100%;" required></textarea>
+        <button type="submit">Envoyer</button>
+    </form>
+    
+    <div id="messages"></div>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        } else {
+            // Afficher les infos utilisateur
+            document.getElementById('usernameDisplay').textContent = currentUser.username;
+            if (currentUser.avatar) {
+                document.getElementById('userAvatar').src = `assets/avatars/${currentUser.avatar}`;
+            }
+
+            // Charger les données utilisateur complètes
+            fetch(`/cgi-bin/api.py?action=get_user&id=${currentUser.id}`)
+                .then(r => r.json())
+                .then(user => {
+                    if (user.avatar) {
+                        document.getElementById('userAvatar').src = `assets/avatars/${user.avatar}`;
+                        // Mettre à jour le localStorage
+                        currentUser.avatar = user.avatar;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    }
+                });
+        }
+
+        // Gestion du changement d'avatar
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // Aperçu immédiat
+                document.getElementById('userAvatar').src = event.target.result;
+                
+                // Conversion en hex pour l'envoi
+                const imgData = event.target.result.split(',')[1];
+                const binaryString = atob(imgData);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const hexString = Array.from(bytes)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                // Envoi au serveur
+                fetch('/cgi-bin/api.py', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update_avatar',
+                        user_id: currentUser.id,
+                        avatar: hexString
+                    })
+                }).then(r => r.json())
+                  .then(data => {
+                      if (data.success) {
+                          // Mettre à jour l'avatar dans le localStorage
+                          currentUser.avatar = data.avatar;
+                          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                      }
+                  });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Déconnexion
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        });
+
+        // Envoi de message
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = document.getElementById('messageContent').value.trim();
+            if (!content) return;
+            
+            try {
+                const response = await fetch('/cgi-bin/api.py', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'send_message',
+                        user_id: currentUser.id,
+                        content: content
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('messageContent').value = '';
+                    loadMessages();
+                } else {
+                    alert(data.error || "Erreur lors de l'envoi");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Erreur de connexion");
+            }
+        });
+
+        // Chargement des messages
+        async function loadMessages() {
+            try {
+                const response = await fetch('/cgi-bin/api.py?action=get_messages');
+                if (!response.ok) throw new Error("Erreur serveur");
+                
+                const messages = await response.json();
+                if (!Array.isArray(messages)) throw new Error("Format de données invalide");
+                
+                let html = '<h2>Messages</h2>';
+                messages.forEach(msg => {
+                    const avatar = msg.avatar || 'default.png';
+                    html += `
+                        <div class="message">
+                            <img src="assets/avatars/${avatar}" class="message-avatar">
+                            <div class="message-content">
+                                <strong>${msg.username}</strong>
+                                <p>${msg.content}</p>
+                                <small>${new Date(msg.created_at).toLocaleString()}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('messages').innerHTML = html;
+            } catch (error) {
+                console.error("Erreur chargement messages:", error);
+                document.getElementById('messages').innerHTML = `
+                    <p style="color:red">Erreur lors du chargement des messages: ${error.message}</p>
+                `;
+            }
+        }
+
+        loadMessages();
+    </script>
+</body>
+</html>

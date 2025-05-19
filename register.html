@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Inscription - 3Chan</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 400px; 
+            margin: 50px auto; 
+            padding: 20px; 
+        }
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        input { 
+            width: 100%; 
+            padding: 8px; 
+            box-sizing: border-box; 
+        }
+        button { 
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            width: 100%; 
+            cursor: pointer; 
+        }
+        .error { 
+            color: red; 
+            margin-top: 5px; 
+        }
+    </style>
+</head>
+<body>
+    <h2>Inscription</h2>
+    <form id="registerForm">
+        <div class="form-group">
+            <input type="text" id="username" placeholder="Nom d'utilisateur" required minlength="3">
+            <div id="usernameError" class="error"></div>
+        </div>
+        <div class="form-group">
+            <input type="password" id="password" placeholder="Mot de passe" required minlength="6">
+            <div id="passwordError" class="error"></div>
+        </div>
+        <button type="submit">S'inscrire</button>
+        <div id="formError" class="error"></div>
+    </form>
+    <p>Vous avez un compte ? <a href="login.html">Se connecter</a></p>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/cgi-bin/api.py', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'register',
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: data.user_id,
+                        username: username,
+                        avatar: 'default.png'
+                    }));
+                    window.location.href = 'forum.html';
+                } else {
+                    document.getElementById('formError').textContent = data.error || "Erreur d'inscription";
+                }
+            } catch (error) {
+                document.getElementById('formError').textContent = "Erreur de connexion au serveur";
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
