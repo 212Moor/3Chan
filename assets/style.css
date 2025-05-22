@@ -1,87 +1,77 @@
-
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #434547;
+    background-color: #283739; /* first-color */
     margin: 0;
     padding: 0;
+    color: #283739; /* fourth-color */
 }
-
-h1, h2 {
-    color: #333;
-}
-
+  
 .container {
     max-width: 900px;
     margin: auto;
     padding: 30px;
-    background: rgb(100, 100, 100);
+    background: #2c5d63; /* second-color */
     box-shadow: 0 2px 12px rgba(0,0,0,0.1);
     margin-top: 40px;
     border-radius: 12px;
+    color: #e0e0e0; /* fourth-color */
 }
-
-#messageForm {
-    margin: 30px 0;
-    display: flex;
-    flex-direction: column;
+  
+h1, h2 {
+    color: #e0e0e0; /* fourth-color */
 }
-
-#messageForm textarea {
-    resize: vertical;
-    padding: 12px;
-    font-size: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    min-height: 100px;
-    margin-bottom: 10px;
-}
-
-#messageForm button {
-    background-color: #4CAF50;
+  
+button {
+    background-color: #a2c11c; /* third-color */
     border: none;
-    color: white;
+    color: #283739; /* first-color */
     padding: 12px 20px;
     font-size: 16px;
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
-
-#messageForm button:hover {
-    background-color: #45a049;
+  
+button:hover {
+    background-color: #8da818; /* légèrement plus foncé que third-color */
 }
-
-.message {
-    background: #fff;
-    padding: 15px 20px;
-    margin-bottom: 10px;
-    border-left: 4px solid #4CAF50;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.message strong {
-    color: #2c3e50;
-    font-weight: 600;
-}
-
-.message small {
-    display: block;
-    margin-top: 5px;
-    color: #888;
-    font-size: 12px;
-}
-
-#userInfo {
-    margin-bottom: 20px;
-    font-size: 16px;
-}
-
+  
 a {
-    color: #4CAF50;
+    color: #a2c11c; /* third-color */
     text-decoration: none;
 }
-
+  
 a:hover {
     text-decoration: underline;
+}
+  
+.message {
+    background: #e0e0e0; /* fourth-color */
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-left: 4px solid #a2c11c; /* third-color */
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    color: #283739; /* first-color */
+}
+  
+.error {
+    color: #ff8080;
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+  
+.form-group {
+    margin-bottom: 15px;
+}
+  
+input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #e0e0e0; /* fourth-color */
+    color: #283739; /* first-color */
 }

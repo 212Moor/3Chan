@@ -95,39 +95,25 @@
 
     <script>
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) {
+        if (!currentUser || !currentUser.id) {
+            console.error("Utilisateur non connecté ou ID manquant");
             window.location.href = 'login.html';
         } else {
-            // Afficher les infos utilisateur
+            console.log("Utilisateur actuel :", currentUser);
             document.getElementById('usernameDisplay').textContent = currentUser.username;
             if (currentUser.avatar) {
                 document.getElementById('userAvatar').src = `assets/avatars/${currentUser.avatar}`;
             }
-
-            // Charger les données utilisateur complètes
-            fetch(`/cgi-bin/api.py?action=get_user&id=${currentUser.id}`)
-                .then(r => r.json())
-                .then(user => {
-                    if (user.avatar) {
-                        document.getElementById('userAvatar').src = `assets/avatars/${user.avatar}`;
-                        // Mettre à jour le localStorage
-                        currentUser.avatar = user.avatar;
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    }
-                });
         }
 
-        // Gestion du changement d'avatar
         document.getElementById('avatarInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
             
             const reader = new FileReader();
             reader.onload = function(event) {
-                // Aperçu immédiat
                 document.getElementById('userAvatar').src = event.target.result;
                 
-                // Conversion en hex pour l'envoi
                 const imgData = event.target.result.split(',')[1];
                 const binaryString = atob(imgData);
                 const bytes = new Uint8Array(binaryString.length);
@@ -138,7 +124,6 @@
                     .map(b => b.toString(16).padStart(2, '0'))
                     .join('');
                 
-                // Envoi au serveur
                 fetch('/cgi-bin/api.py', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -150,40 +135,40 @@
                 }).then(r => r.json())
                   .then(data => {
                       if (data.success) {
-                          // Mettre à jour l'avatar dans le localStorage
-                          currentUser.avatar = data.avatar;
-                          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                          setTimeout(() => {
+                              currentUser.avatar = data.avatar;
+                              localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                              document.getElementById('userAvatar').src = `assets/avatars/${data.avatar}`;
+                          }, 500); // Ajout d'un délai
                       }
                   });
             };
             reader.readAsDataURL(file);
         });
 
-        // Déconnexion
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('currentUser');
             window.location.href = 'login.html';
         });
 
-        // Envoi de message
         document.getElementById('messageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const content = document.getElementById('messageContent').value.trim();
             if (!content) return;
-            
+
             try {
                 const response = await fetch('/cgi-bin/api.py', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'send_message',
-                        user_id: currentUser.id,
+                        user_id: currentUser.id, // Vérifiez que currentUser.id est défini
                         content: content
                     })
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     document.getElementById('messageContent').value = '';
                     loadMessages();
@@ -199,6 +184,7 @@
         // Chargement des messages
         async function loadMessages() {
             try {
+              
                 const response = await fetch('/cgi-bin/api.py?action=get_messages');
                 if (!response.ok) throw new Error("Erreur serveur");
                 
@@ -213,7 +199,7 @@
                             <img src="assets/avatars/${avatar}" class="message-avatar">
                             <div class="message-content">
                                 <strong>${msg.username}</strong>
-                                <p>${msg.content}</p>
+                                <p>${msg.content || '(message vide)'}</p>
                                 <small>${new Date(msg.created_at).toLocaleString()}</small>
                             </div>
                         </div>
