@@ -139,7 +139,7 @@
                               currentUser.avatar = data.avatar;
                               localStorage.setItem('currentUser', JSON.stringify(currentUser));
                               document.getElementById('userAvatar').src = `assets/avatars/${data.avatar}`;
-                          }, 500); // Ajout d'un délai
+                          }, 500); 
                       }
                   });
             };
@@ -163,7 +163,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'send_message',
-                        user_id: currentUser.id, // Vérifiez que currentUser.id est défini
+                        user_id: currentUser.id, 
                         content: content
                     })
                 });
@@ -181,7 +181,6 @@
             }
         });
 
-        // Chargement des messages
         async function loadMessages() {
             try {
               

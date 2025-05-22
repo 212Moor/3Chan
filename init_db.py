@@ -3,7 +3,6 @@ import sqlite3
 conn = sqlite3.connect('database.db')
 c = conn.cursor()
 
-# Table des utilisateurs
 c.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,7 +13,6 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
-# Table des messages
 c.execute("""
 CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
