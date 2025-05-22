@@ -105,7 +105,7 @@ def main():
                     SELECT m.id, m.content, m.parent_id, m.created_at, u.username, u.avatar
                     FROM messages m
                     JOIN users u ON m.user_id = u.id
-                    ORDER BY m.created_at ASC
+                    ORDER BY m.created_at DESC
                 """)
                 messages = []
                 for row in c.fetchall():
@@ -115,7 +115,23 @@ def main():
             except Exception as e:
                 print(json.dumps({"success": False, "error": "Erreur lors du chargement des messages : " + str(e)}))
 
+        elif action == 'delete_message':
+            user_id = data.get('user_id')
+            message_id = data.get('message_id')
 
+            if not user_id or not message_id:
+                raise ValueError("Paramètres manquants")
+            c.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+            user = c.fetchone()
+            if not user or user["username"].lower() != "admin":
+                print(json.dumps({"success": False, "error": "Non autorisé"}))
+            else:
+                c.execute("DELETE FROM messages WHERE id = ?", (message_id,))
+                conn.commit()
+                print(json.dumps({"success": True}))
+
+
+        
         elif action == 'update_avatar':
             user_id = data.get('user_id')
             avatar_data = data.get('avatar')

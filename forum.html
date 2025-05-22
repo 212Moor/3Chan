@@ -199,6 +199,11 @@
                             <div class="message-content">
                                 <strong>${msg.username}</strong>
                                 <p>${msg.content || '(message vide)'}</p>
+                                ${
+                                currentUser.username.toLowerCase() === 'admin'
+                                    ? `<button onclick="deleteMessage(${msg.id})" style="background:#f44336;color:white;border:none;padding:5px 10px;margin-top:5px;border-radius:5px;cursor:pointer;">🗑 Supprimer</button>`
+                                    : ''
+                                }
                                 <small>${new Date(msg.created_at).toLocaleString()}</small>
                             </div>
                         </div>
@@ -215,6 +220,32 @@
         }
 
         loadMessages();
+        async function deleteMessage(id) {
+            if (!confirm("Supprimer ce message ?")) return;
+
+            try {
+                const response = await fetch('/cgi-bin/api.py', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete_message',
+                        user_id: currentUser.id,
+                        message_id: id
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    loadMessages();
+                } else {
+                    alert(data.error || "Erreur lors de la suppression");
+                }
+            } catch (error) {
+                console.error("Erreur suppression:", error);
+                alert("Erreur réseau lors de la suppression");
+            }
+        }
+
     </script>
 </body>
 </html>
