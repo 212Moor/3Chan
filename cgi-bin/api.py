@@ -82,6 +82,8 @@ def main():
         elif action == 'send_message':
             user_id = data.get('user_id')
             content = data.get('content', '')
+            recipient_id = data.get('recipient_id')  
+
             if not isinstance(content, str):
                 raise ValueError("Message invalide (doit être une chaîne de caractères)")
             content = content.strip()
@@ -93,20 +95,33 @@ def main():
                 raise ValueError("Le message ne peut pas être vide")
 
             c.execute("""
-                INSERT INTO messages (content, user_id, parent_id)
-                VALUES (?, ?, ?)
-            """, (content, user_id, parent_id))
+                INSERT INTO messages (content, user_id, parent_id, recipient_id)
+                VALUES (?, ?, ?, ?)
+            """, (content, user_id, parent_id, recipient_id))
             conn.commit()
             print(json.dumps({"success": True}))
 
+        elif action == 'get_users':
+            c.execute("SELECT id, username FROM users")
+            users = [dict(row) for row in c.fetchall()]
+            print(json.dumps(users))
+
+
         elif action == 'get_messages':
             try:
+                user_id = data.get('user_id')
+
                 c.execute("""
-                    SELECT m.id, m.content, m.parent_id, m.created_at, u.username, u.avatar
+                    SELECT m.id, m.content, m.parent_id, m.created_at, m.recipient_id,
+                        u.username, u.avatar
                     FROM messages m
                     JOIN users u ON m.user_id = u.id
+                    WHERE m.recipient_id IS NULL
+                    OR m.user_id = ?
+                    OR m.recipient_id = ?
                     ORDER BY m.created_at DESC
-                """)
+                """, (user_id, user_id))
+
                 messages = []
                 for row in c.fetchall():
                     if row['content'] is not None:

@@ -19,10 +19,14 @@ CREATE TABLE IF NOT EXISTS messages (
     content TEXT NOT NULL,
     user_id INTEGER NOT NULL,
     parent_id INTEGER DEFAULT 0,
+    recipient_id INTEGER DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (recipient_id) REFERENCES users(id)
 )
 """)
+
+
 
 conn.commit()
 conn.close()
